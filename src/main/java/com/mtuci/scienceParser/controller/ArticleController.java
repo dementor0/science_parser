@@ -1,19 +1,15 @@
 package com.mtuci.scienceParser.controller;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import lombok.RequiredArgsConstructor;
 import com.mtuci.scienceParser.model.Article;
+import com.mtuci.scienceParser.service.ArticleService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import com.mtuci.scienceParser.service.ArticleService;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 @Controller
 @RequestMapping("/parse")
@@ -21,15 +17,13 @@ import java.util.Objects;
 public class ArticleController {
 
     private final ArticleService articleService;
-//    @GetMapping("/getPublication")
-//    public ResponseEntity<Article> getPublications(@RequestParam("request") String request, @RequestParam(value = "numberOfPages",defaultValue = "70") Integer numberOfPages) {
-//        return ResponseEntity.ok().body(articleService.parseArticle(request, numberOfPages));
+//    @GetMapping("/getPublicationInSearch")
+//    public ResponseEntity<Article> getPublicationsInSearch() {
+//        return ResponseEntity.ok().body(articleService.parsePublicationInSearch());
 //    }
-    @GetMapping("/getPublication")
-    public ResponseEntity<List<String>> getPublications(@RequestBody Map<String, Object> requestMap) throws InterruptedException {
-        String request = requestMap.get("request").toString();
-        int numberOfPages = (int) requestMap.get("numberOfPages");
-        return ResponseEntity.ok().body(articleService.findSearchUrlForPublication(request, numberOfPages));
+    @GetMapping("/getPublicationInTopic")
+    public ResponseEntity<List<Article>> getPublicationsInTopic(@RequestParam("request") String request, @RequestParam(value = "numberOfPages", defaultValue = "20") Integer numberOfPages) {
+        List<Article> publication = articleService.parsePublication(request, numberOfPages);
+        return ResponseEntity.ok().body(publication);
     }
-
 }

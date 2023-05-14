@@ -1,0 +1,55 @@
+databaseChangeLog:
+  - changeSet:
+      id: createPublicationTable
+      author: Dmitry
+      changes:
+        - createTable:
+            tableName: publication
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text_available
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_completion
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: authors
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: annotation
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: url_on_publication
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: url_for_download
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
