@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "publication")
-public class Article {
+public class Publication {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;      //порядковый номер
@@ -22,8 +22,23 @@ public class Article {
 
     private Date dateCompletion; // дата публикации
 
+//    @Column(name = "authors_id")
+//    private Long authorsId;
+
+    @Transient
+    private List<String> authorNames; // список имен авторов
+
+    // Геттер и сеттер для authorNames
+    public List<String> getAuthorNames() {
+        return authorNames;
+    }
+
+    public void setAuthorNames(List<String> authorNames) {
+        this.authorNames = authorNames;
+    }
+
     @OneToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idArticle", nullable = false)
+    @JoinColumn
     private List<Author> authors; // авторы
 
     private String annotation; // аннотация

@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: createAuthorTable
+      author: Dmitry
+      changes:
+        - createTable:
+            tableName: author
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: id_publication
+                  type: bigint
+              - column:
+                  name: authors_id
+                  type: bigint
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: url
+                  type: varchar(255)
+                  constraints:
+                    nullable: false

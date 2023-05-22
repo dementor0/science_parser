@@ -11,7 +11,8 @@ public class Author {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;      //порядковый номер
 
-    private Long idArticle;
+    @Column(name = "id_publication")
+    private Long idPublication;
 
     private String name;
 

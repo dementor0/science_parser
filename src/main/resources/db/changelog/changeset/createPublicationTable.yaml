@@ -26,30 +26,32 @@ databaseChangeLog:
               - column:
                   name: text_available
                   type: varchar(255)
-                  constraints:
-                    nullable: false
               - column:
                   name: date_completion
                   type: date
                   constraints:
                     nullable: false
               - column:
-                  name: authors
+                  name: author_names
                   type: varchar(255)
-                  constraints:
-                    nullable: false
+              - column:
+                  name: authors_id
+                  type: bigint
               - column:
                   name: annotation
+                  type: text
+              - column:
+                  name: url_on_publication
                   type: text
                   constraints:
                     nullable: false
               - column:
-                  name: url_on_publication
-                  type: varchar(255)
-                  constraints:
-                    nullable: false
-              - column:
                   name: url_for_download
-                  type: varchar(255)
-                  constraints:
-                    nullable: false
+                  type: text
+        - addForeignKeyConstraint:
+            baseColumnNames: authors_id
+            baseTableName: publication
+            initiallyDeferred: false
+            referencedColumnNames: id
+            referencedTableName: author
+            constraintName: author_publication_fk
