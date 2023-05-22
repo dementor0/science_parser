@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Система парсинга</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="submit"] {
+            padding: 5px;
+        }
+
+        input[type="submit"] {
+            cursor: pointer;
+        }
+
+        #tableContainer1 {
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        #tableContainer2 {
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        #publicationsTable {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        #authorsInfoTable {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+
+        #publicationsTable thead th,
+        #publicationsTable tbody td {
+            padding: 10px;
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: left;
+            border: 1px solid #ccc;
+        }
+        #authorsInfoTable thead th,
+        #authorsInfoTable tbody td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+<h1>Система парсинга информации</h1>
+<form id="getPublicationInTopic">
+    <label for="requestInTopic">Введите запрос для поиска статей:</label>
+    <input type="text" id="requestInTopic" name="requestInTopic" required><br><br>
+
+    <label for="numberOfPagesInTopic">Введите количество страниц:</label>
+    <input type="number" id="numberOfPagesInTopic" name="numberOfPagesInTopic" min="1" max="20"><br><br>
+
+    <input type="submit" value="Получить информацию">
+</form>
+
+<form id="getPublicationInSearch">
+    <label for="requestInSearch">Введите запрос для поиска статей:</label>
+    <input type="text" id="requestInSearch" name="requestInSearch" required><br><br>
+
+    <label for="numberOfPagesInSearch">Введите количество страниц:</label>
+    <input type="number" id="numberOfPagesInSearch" name="numberOfPagesInSearch" min="1" max="20"><br><br>
+
+    <input type="submit" value="Получить информацию">
+</form>
+
+<div id="tableContainer1">
+    <table id="publicationsTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Type</th>
+            <th>TextAvailable</th>
+            <th>DateCompletion</th>
+            <th>AuthorsNames</th>
+            <th>Authors</th>
+            <th>Annotation</th>
+            <th>UrlOnPublication</th>
+            <th>UrlForDownload</th>
+        </tr>
+        </thead>
+        <tbody id="publicationBody"></tbody>
+    </table>
+</div>
+
+<div id="tableContainer2">
+    </table>
+    <table id="authorsInfoTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>IdPublication</th>
+            <th>Name</th>
+            <th>Url</th>
+        </tr>
+        </thead>
+        <tbody id="authorsInfoBody"></tbody>
+    </table>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('getPublicationInTopic').addEventListener('submit', function(event) {
+            event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+
+            var requestInTopic = document.getElementById('requestInTopic').value;
+            var numberOfPagesInTopic = document.getElementById('numberOfPagesInTopic').value;
+
+            var url = '/parse/getPublicationInTopic?requestInTopic=' + encodeURIComponent(requestInTopic) + '&numberOfPagesInTopic=' + encodeURIComponent(numberOfPagesInTopic);
+
+            fetch(url, {
+                method: 'GET'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    var tableBody = document.getElementById('publicationBody');
+                    var authorsBody = document.getElementById('authorsInfoBody')
+                    // Добавляем данные в таблицу
+                    data.forEach(function(Publication) {
+                        var row = document.createElement('tr');
+
+                        var idPublication = document.createElement('td');
+                        idPublication.textContent = Publication.id;
+                        row.appendChild(idPublication);
+
+                        var Title = document.createElement('td');
+                        Title.textContent = Publication.title;
+                        row.appendChild(Title);
+
+                        var Type = document.createElement('td');
+                        Type.textContent = Publication.type;
+                        row.appendChild(Type);
+
+                        var TextAvailable = document.createElement('td');
+                        TextAvailable.textContent = Publication.textAvailable;
+                        row.appendChild(TextAvailable);
+
+                        var DateCompletion = document.createElement('td');
+                        DateCompletion.textContent = Publication.dateCompletion;
+                        row.appendChild(DateCompletion);
+
+                        var AuthorNames = document.createElement('td');
+                        AuthorNames.textContent = Publication.authorNames;
+                        row.appendChild(AuthorNames);
+
+                        var Authors = document.createElement('td');
+                        Authors.textContent = Publication.authors;
+                        row.appendChild(Authors);
+
+                        var Annotation = document.createElement('td');
+                        Annotation.textContent = Publication.annotation;
+                        row.appendChild(Annotation);
+
+                        var UrlOnPublication = document.createElement('td');
+                        UrlOnPublication.textContent = Publication.urlOnPublication;
+                        row.appendChild(UrlOnPublication);
+
+                        var UrlForDownload = document.createElement('td');
+                        UrlForDownload.textContent = Publication.urlForDownload;
+                        row.appendChild(UrlForDownload);
+
+                        tableBody.appendChild(row);
+                    });
+                    data.forEach(function(Author) {
+                        var row = document.createElement('tr');
+
+                        var idAuthor = document.createElement('td');
+                        idAuthor.textContent = Author.id;
+                        row.appendChild(idAuthor);
+
+                        var IdPublication = document.createElement('td');
+                        IdPublication.textContent = Author.idPublication;
+                        row.appendChild(IdPublication);
+
+                        var NameAuthor = document.createElement('td');
+                        NameAuthor.textContent = Author.name;
+                        row.appendChild(NameAuthor);
+
+                        var UrlOnAuthor = document.createElement('td');
+                        UrlOnAuthor.textContent = Author.url;
+                        row.appendChild(UrlOnAuthor);
+
+                        authorsBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    // Обработка ошибок
+                    console.log(error);
+                });
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('getPublicationInSearch').addEventListener('submit', function(event) {
+            event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+
+            var requestInSearch = document.getElementById('requestInSearch').value;
+            var numberOfPagesInSearch = document.getElementById('numberOfPagesInSearch').value;
+
+            var url = '/parse/getPublicationInSearch?requestInSearch=' + encodeURIComponent(requestInSearch) + '&numberOfPagesInSearch=' + encodeURIComponent(numberOfPagesInSearch);
+
+            fetch(url, {
+                method: 'GET'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    var tableBody = document.getElementById('publicationBody');
+                    var authorsBody = document.getElementById('authorsInfoBody')
+                    // Добавляем данные в таблицу
+                    data.forEach(function(Publication) {
+                        var row = document.createElement('tr');
+
+                        var idPublication = document.createElement('td');
+                        idPublication.textContent = Publication.id;
+                        row.appendChild(idPublication);
+
+                        var Title = document.createElement('td');
+                        Title.textContent = Publication.title;
+                        row.appendChild(Title);
+
+                        var Type = document.createElement('td');
+                        Type.textContent = Publication.type;
+                        row.appendChild(Type);
+
+                        var TextAvailable = document.createElement('td');
+                        TextAvailable.textContent = Publication.textAvailable;
+                        row.appendChild(TextAvailable);
+
+                        var DateCompletion = document.createElement('td');
+                        DateCompletion.textContent = Publication.dateCompletion;
+                        row.appendChild(DateCompletion);
+
+                        var AuthorNames = document.createElement('td');
+                        AuthorNames.textContent = Publication.authorNames;
+                        row.appendChild(AuthorNames);
+
+                        var Authors = document.createElement('td');
+                        Authors.textContent = Publication.authors;
+                        row.appendChild(Authors);
+
+                        var Annotation = document.createElement('td');
+                        Annotation.textContent = Publication.annotation;
+                        row.appendChild(Annotation);
+
+                        var UrlOnPublication = document.createElement('td');
+                        UrlOnPublication.textContent = Publication.urlOnPublication;
+                        row.appendChild(UrlOnPublication);
+
+                        var UrlForDownload = document.createElement('td');
+                        UrlForDownload.textContent = Publication.urlForDownload;
+                        row.appendChild(UrlForDownload);
+
+                        tableBody.appendChild(row);
+                    });
+                    data.forEach(function(Author) {
+                        var row = document.createElement('tr');
+
+                        var idAuthor = document.createElement('td');
+                        idAuthor.textContent = Author.id;
+                        row.appendChild(idAuthor);
+                        var NameAuthor = document.createElement('td');
+                        NameAuthor.textContent = Author.name;
+                        row.appendChild(NameAuthor);
+
+                        var IdPublication = document.createElement('td');
+                        IdPublication.textContent = Author.idPublication;
+                        row.appendChild(IdPublication);
+
+
+
+                        var UrlOnAuthor = document.createElement('td');
+                        UrlOnAuthor.textContent = Author.url;
+                        row.appendChild(UrlOnAuthor);
+
+                        authorsBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    // Обработка ошибок
+                    console.log(error);
+                });
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: createPublicationTable
+      author: Dmitry
+      changes:
+        - createTable:
+            tableName: publication
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: text_available
+                  type: varchar(255)
+              - column:
+                  name: date_completion
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: author_names
+                  type: varchar(255)
+              - column:
+                  name: authors_id
+                  type: bigint
+              - column:
+                  name: annotation
+                  type: text
+              - column:
+                  name: url_on_publication
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: url_for_download
+                  type: text
+        - addForeignKeyConstraint:
+            baseColumnNames: authors_id
+            baseTableName: publication
+            initiallyDeferred: false
+            referencedColumnNames: id
+            referencedTableName: author
+            constraintName: author_publication_fk

@@ -1,44 +1,49 @@
 package com.mtuci.scienceParser.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 import java.sql.Date;
-import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 @Entity
-@RequiredArgsConstructor
-@AllArgsConstructor
 @Table(name = "publication")
-public class Article {
+public class Publication {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;      //порядковый номер
 
-    @Column(name = "title",unique = true,nullable = false)
     private String title; // заголовок статьи
 
-    @Column(name = "type", nullable = false)
     private String type; // вид статьи (публикация, статья, пост)
 
-    @Column(name = "text_available", nullable = false)
     private String textAvailable; // уровень доступности (полное содержание или нет)
 
-    @Column(name = "date_completion", nullable = false)
     private Date dateCompletion; // дата публикации
 
-    @Column(name = "authors", nullable = false)
-    private String authors; // авторы
+//    @Column(name = "authors_id")
+//    private Long authorsId;
 
-    @Column(name = "annotation", nullable = false)
+    @Transient
+    private List<String> authorNames; // список имен авторов
+
+    // Геттер и сеттер для authorNames
+    public List<String> getAuthorNames() {
+        return authorNames;
+    }
+
+    public void setAuthorNames(List<String> authorNames) {
+        this.authorNames = authorNames;
+    }
+
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn
+    private List<Author> authors; // авторы
+
     private String annotation; // аннотация
 
-    @Column(name = "url_on_publication", nullable = false)
     private String urlOnPublication; //ссылка на статью
 
-    @Column(name = "url_for_download", nullable = false)
     private String urlForDownload; // ссылка на скачивание
 }
