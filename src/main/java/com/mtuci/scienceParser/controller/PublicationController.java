@@ -1,8 +1,10 @@
 package com.mtuci.scienceParser.controller;
 
+import com.mtuci.scienceParser.model.Author;
 import com.mtuci.scienceParser.model.Publication;
 import com.mtuci.scienceParser.service.PublicationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -15,24 +17,29 @@ import java.util.List;
 @Controller
 @RequestMapping("/parse")
 @RequiredArgsConstructor
+@Slf4j
 public class PublicationController {
     @Autowired
-    private final PublicationService articleService;
+    private final PublicationService publicationService;
 
     @GetMapping("/getPublicationInTopic")
     public ResponseEntity<List<Publication>> getPublicationsInTopic(@RequestParam("requestInTopic") String request, @RequestParam(value = "numberOfPagesInTopic", defaultValue = "20") Integer numberOfPages) throws InterruptedException {
-        List<Publication> publication = articleService.parsePublicationInTopic(request, numberOfPages);
+        List<Publication> publication = publicationService.parsePublicationInTopic(request, numberOfPages);
         return ResponseEntity.ok().body(publication);
     }
 
     @GetMapping("/getPublicationInSearch")
     public ResponseEntity<List<Publication>> getPublicationsInSearch(@RequestParam("requestInSearch") String request, @RequestParam(value = "numberOfPagesInSearch", defaultValue = "20") Integer numberOfPages) throws InterruptedException {
-        //List<Publication> publication = articleService.parsePublicationInSearch(request, numberOfPages);
-        return ResponseEntity.ok().body(articleService.parsePublicationInSearch(request, numberOfPages));
+        return ResponseEntity.ok().body(publicationService.parsePublicationInSearch(request, numberOfPages));
+    }
+
+    @GetMapping("/getAuthors")
+    public ResponseEntity<List<Author>> getAuthorInSearch(){
+        return ResponseEntity.ok().body(publicationService.getAllAuthors());
     }
 
     @GetMapping
     public String home(){
-        return "ScienceParserGUI";
+        return "ScienceParserDesktop1";
     }
 }
