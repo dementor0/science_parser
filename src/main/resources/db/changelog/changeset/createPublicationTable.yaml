@@ -15,7 +15,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: title
-                  type: varchar(255)
+                  type: varchar(700)
                   constraints:
                     nullable: false
               - column:
@@ -31,9 +31,9 @@ databaseChangeLog:
                   type: date
                   constraints:
                     nullable: false
-              - column:
-                  name: author_names
-                  type: varchar(255)
+#              - column:
+#                  name: authors
+#                  type: varchar(255)
               - column:
                   name: authors_id
                   type: bigint

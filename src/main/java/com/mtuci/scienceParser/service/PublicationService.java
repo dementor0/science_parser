@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 @Service
@@ -35,10 +36,11 @@ public class PublicationService {
     @Autowired
     private AuthorRepository authorRepository;
     public List<Publication> parsePublicationInTopic(String request, Integer numberOfPages) throws InterruptedException {
+        WebElement productElement = null;
+        WebElement annotationText;
         List<Publication> publicationsList = new ArrayList<>();
         List<Author> authorsList;
         List<WebElement> authorsWebElementsList;
-        List<String> authorNames = new ArrayList<>();
 
         List<String> urlOnPublicationForTopicSearch = findPublicationUrlInTopic(request,numberOfPages);
 
@@ -47,12 +49,21 @@ public class PublicationService {
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverTopic = new ChromeDriver(options);
         for (String str : urlOnPublicationForTopicSearch){
-            driverTopic.get(str);
+            driverTopic.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+            try {
+                driverTopic.get(str);
+            }catch (TimeoutException ignore){}
+
             Publication publication = new Publication();
 
-            WebDriverWait wait = new WebDriverWait(driverTopic, Duration.ofSeconds(10));
+            WebDriverWait wait = new WebDriverWait(driverTopic, Duration.ofSeconds(12));
             By productSelector = By.cssSelector("#lite-page > main");
-            WebElement productElement = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
+            try {
+                productElement = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
+            }catch (TimeoutException e){
+                driverTopic.get(str);
+            }
+           
             List<WebElement> publicationElements = productElement.findElements(By.xpath("//*[@id=\"lite-page\"]/main/section"));
             for (WebElement publicationElement : publicationElements){
                 By elementTitle = By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-xl.nova-legacy-e-text--family-display.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-grey-900.research-detail-header-section__title");
@@ -83,10 +94,13 @@ public class PublicationService {
 
 
                 By annotationElement = By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-m.nova-legacy-e-text--family-sans-serif.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-grey-800.research-detail-middle-section__abstract");
-                WebElement annotationText = productElement.findElement(annotationElement);
-                log.info("Аннотация {}", annotationText.getText());
-                publication.setAnnotation(annotationText.getText());
-
+                try {
+                    annotationText = productElement.findElement(annotationElement);
+                    log.info("Аннотация {}", annotationText.getText());
+                    publication.setAnnotation(annotationText.getText());
+                }catch (NoSuchElementException e){
+                    publication.setAnnotation("Отсутствует");
+                }
                 try {
                     By urlElement = By.xpath("//*[@id=\"lite-page\"]/main/section/section[1]/section/div[1]/div/div[2]/div[1]/a");
                     WebElement urlOnPage = productElement.findElement(urlElement);
@@ -113,16 +127,12 @@ public class PublicationService {
                 authorsWebElementsList = publicationElement.findElements(By.cssSelector(".nova-legacy-l-flex__item.research-detail-author-list__item.research-detail-author-list__item--has-image"));
                 authorsList = parseAuthors(authorsWebElementsList, publication.getId());
                 authorRepository.saveAll(authorsList);
-                for (Author author : authorsList){
-                    String name = String.join(",",author.getName());
-                    authorNames.add(name);
-                }
-                publication.setAuthorNames(authorNames);
+
+                publication.setAuthors(authorsList);
                 publicationRepository.save(publication);
                 publication = publicationRepository.findById(publication.getId()).orElse(null);
             }
             publicationsList.add(publication);
-            authorNames.clear();
         }
         publicationRepository.saveAll(publicationsList);
         driverTopic.close();
@@ -132,7 +142,6 @@ public class PublicationService {
         List<Publication> publicationsList = new ArrayList<>();
         List<Author> authorsList;
         List<WebElement> authorsWebElementsList;
-        List<String> authorNames = new ArrayList<>();
 
         List<String> urlOnPublicationForSearch = findPublicationUrlInSearch(request,numberOfPages);
 
@@ -141,7 +150,11 @@ public class PublicationService {
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverSearch = new ChromeDriver(options);
         for (String str : urlOnPublicationForSearch){
-            driverSearch.get(str);
+            driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+            try {
+                driverSearch.get(str);
+            }catch (TimeoutException ignore){}
+
             Publication publication = new Publication();
 
             WebDriverWait wait = new WebDriverWait(driverSearch, Duration.ofSeconds(10));
@@ -209,16 +222,11 @@ public class PublicationService {
                 authorsList = parseAuthors(authorsWebElementsList, publication.getId());
                 authorRepository.saveAll(authorsList);
 
-                for (Author author : authorsList){
-                    String name = String.join(",",author.getName());
-                    authorNames.add(name);
-                }
-                publication.setAuthorNames(authorNames);
+                publication.setAuthors(authorsList);
                 publicationRepository.save(publication);
                 publication = publicationRepository.findById(publication.getId()).orElse(null);
             }
              publicationsList.add(publication);
-             authorNames.clear();
         }
         publicationRepository.saveAll(publicationsList);
         driverSearch.close();
@@ -229,32 +237,42 @@ public class PublicationService {
 
         for (WebElement secondElement : authorsWebElementsList) {
             Author author = new Author();
-            List<WebElement> authorsElement = secondElement.findElements(By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-m.nova-legacy-e-text--family-display.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-inherit.nova-legacy-v-person-list-item__title"));
-            for (WebElement elementAuthors : authorsElement) {
-                List<WebElement> informationAboutAuthor = elementAuthors.findElements(By.cssSelector(".nova-legacy-e-link.nova-legacy-e-link--color-inherit.nova-legacy-e-link--theme-bare"));
-                for (WebElement elementInformation : informationAboutAuthor) {
-                    System.out.println(elementInformation.getText());
-                    System.out.println(elementInformation.getAttribute("href"));
-                    author.setName(elementInformation.getText());
-                    author.setUrl(elementInformation.getAttribute("href"));
+            try {
+                List<WebElement> authorsElement = secondElement.findElements(By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-m.nova-legacy-e-text--family-display.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-inherit.nova-legacy-v-person-list-item__title"));
+                for (WebElement elementAuthors : authorsElement) {
+                    List<WebElement> informationAboutAuthor = elementAuthors.findElements(By.cssSelector(".nova-legacy-e-link.nova-legacy-e-link--color-inherit.nova-legacy-e-link--theme-bare"));
+                    for (WebElement elementInformation : informationAboutAuthor) {
+                        System.out.println(elementInformation.getText());
+                        System.out.println(elementInformation.getAttribute("href"));
+                        author.setName(elementInformation.getText());
+                        author.setUrl(elementInformation.getAttribute("href"));
+                    }
                 }
-            }
-            author.setIdPublication(id);
-            authorList.add(author);
-            authorRepository.save(author);
+                author.setIdPublication(id);
+                authorList.add(author);
+                authorRepository.save(author);
+            } catch (Exception e){ log.error("Автор не найден", e);}
         }
         return authorList;
+    }
+    public List<Author> getAllAuthors(){
+        return authorRepository.findAll();
     }
 
     private List<String> findPublicationUrlInTopic(String request, Integer numberOfPages) throws InterruptedException {
         List<String> urlOnPublicationForTopicSearch = new ArrayList<>();
+        WebElement lastItem, link;
+        String href;
         System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver.exe");
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverTopic = new ChromeDriver(options);
 
         String url = "https://www.researchgate.net/topic/" + request + "/publications";
-        driverTopic.get(url);
+        driverTopic.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+        try {
+            driverTopic.get(url);
+        }catch (TimeoutException ignore){}
 
         int k = 1;
         while (numberOfPages!=0) {
@@ -262,8 +280,12 @@ public class PublicationService {
             By productSelector = By.cssSelector("#lite-page > main > section.lite-page__content");
             WebElement productElement = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
             List<WebElement> publicationElements = productElement.findElements(By.xpath("//*[@id=\"lite-page\"]/main/section[3]"));
+
             // ссылка на след страницу
-            By numberOfTopicWebpage = By.cssSelector("#lite-page > main > section.lite-page__content > div:nth-child(4) > div > div > div:nth-child(100) > div > div > div > div:nth-child(1) > div > div:nth-child(12) > a");
+            WebElement divPages = productElement.findElement(By.cssSelector(".nova-legacy-c-button-group.nova-legacy-c-button-group--wrap.nova-legacy-c-button-group--gutter-m.nova-legacy-c-button-group--orientation-horizontal.nova-legacy-c-button-group--width-auto"));
+            List<WebElement> items = divPages.findElements(By.cssSelector(".nova-legacy-c-button-group__item"));
+            lastItem = items.get(items.size() - 1);
+
             for (WebElement publicationElement : publicationElements) {
                 log.info("Страница: {}", k);
                 List<WebElement> element = publicationElement.findElements(By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-l.nova-legacy-e-text--family-display.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-inherit.nova-legacy-v-publication-item__title"));
@@ -277,8 +299,9 @@ public class PublicationService {
                 }
             }
             try {
-                WebElement number = wait.until(ExpectedConditions.visibilityOfElementLocated(numberOfTopicWebpage));
-                driverTopic.get(number.getAttribute("href"));
+                link = lastItem.findElement(By.tagName("a"));
+                href = link.getAttribute("href");
+                driverTopic.get(href);
             } catch (TimeoutException e) {
                 log.error("Ошибка: {}", e.getMessage());
                 System.out.println("Страница не найдена");
@@ -299,7 +322,11 @@ public class PublicationService {
         WebDriver driverSearch = new ChromeDriver(options);
 
         String url = "https://www.researchgate.net/search/publication?q=" + request;
-        driverSearch.get(url);
+        driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+        try {
+            driverSearch.get(url);
+        }catch (TimeoutException ignore){}
+
 
         int k = 1;
         while (numberOfPages!=0) {
