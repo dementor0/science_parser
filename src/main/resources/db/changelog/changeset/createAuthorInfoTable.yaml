@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: createAuthorInfoTable
+      author: Dmitry
+      changes:
+        - createTable:
+            tableName: author_info
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+              - column:
+                  name: url
+                  type: text
+              - column:
+                  name: research_interest_score
+                  type: float
+              - column:
+                  name: citations
+                  type: bigint
+              - column:
+                  name: h_index
+                  type: bigint
+              - column:
+                  name: publication_id
+                  type: bigint
+              - column:
+                  name: amount_publication
+                  type: bigint
+              - column:
+                  name: publication_title
+                  type: varchar(255)
+              - column:
+                  name: url_on_publication
+                  type: text
+        - addForeignKeyConstraint:
+            baseColumnNames: publication_id
+            baseTableName: author_info
+            initiallyDeferred: false
+            referencedColumnNames: id
+            referencedTableName: publication
+            constraintName: author_publications_fk

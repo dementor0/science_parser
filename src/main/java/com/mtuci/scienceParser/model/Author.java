@@ -9,7 +9,7 @@ import lombok.Data;
 public class Author {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;      //порядковый номер
+    private Long id;
 
     @Column(name = "id_publication")
     private Long idPublication;

@@ -1,6 +1,6 @@
 package com.mtuci.scienceParser.controller;
 
-import com.mtuci.scienceParser.model.Author;
+import com.mtuci.scienceParser.model.AuthorInfo;
 import com.mtuci.scienceParser.model.Publication;
 import com.mtuci.scienceParser.service.PublicationService;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,7 @@ public class PublicationController {
 
     @GetMapping("/getPublicationInTopic")
     public ResponseEntity<List<Publication>> getPublicationsInTopic(@RequestParam("requestInTopic") String request, @RequestParam(value = "numberOfPagesInTopic", defaultValue = "20") Integer numberOfPages) throws InterruptedException {
-        List<Publication> publication = publicationService.parsePublicationInTopic(request, numberOfPages);
-        return ResponseEntity.ok().body(publication);
+        return ResponseEntity.ok().body(publicationService.parsePublicationInTopic(request, numberOfPages));
     }
 
     @GetMapping("/getPublicationInSearch")
@@ -33,9 +32,9 @@ public class PublicationController {
         return ResponseEntity.ok().body(publicationService.parsePublicationInSearch(request, numberOfPages));
     }
 
-    @GetMapping("/getAuthors")
-    public ResponseEntity<List<Author>> getAuthorInSearch(){
-        return ResponseEntity.ok().body(publicationService.getAllAuthors());
+    @GetMapping("/getAuthorInfo")
+    public ResponseEntity<AuthorInfo> getAuthorInfo(@RequestParam("requestNameAuthor") String request) {
+        return ResponseEntity.ok().body(publicationService.parseAuthorInfo(request));
     }
 
     @GetMapping
