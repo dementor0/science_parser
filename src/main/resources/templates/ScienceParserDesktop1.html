@@ -17,16 +17,17 @@
         </div>
         <div class="div-author-text">
             <p class="text-author-info">
-                Для получения информации об авторах нажмите кнопку
+                Ведите автора для получения информации о нем
             </p>
+            <input type="text" class="div-author-info-input" id="requestForAuthorInfo" name="requestForAuthorInfo" required><br><br>
         </div>
         <form id="getPublicationInTopic">
-            <input class="button-get-popular" type="submit" value="Получить информацию">
+            <button class="button-get-popular" id="getTopicPublicationInfoButton">Получить информацию</button>
         </form>
         <form id="getPublicationInSearch">
-            <input class="button-get-other" type="submit" value="Получить информацию">
+            <button class="button-get-other" id="getSearchPublicationInfoButton">Получить информацию</button>
         </form>
-        <input class="button-get-author-info" type="submit" value="Информация об авторах">
+        <button class="button-get-author-info" id="getAuthorInfoButton">Информация об авторе</button>
         <div class="publication-table-container">
             <table class="publication-table" id="publicationsTable">
                 <thead>
@@ -45,10 +46,23 @@
                 <tbody id="publicationBody"></tbody>
             </table>
         </div>
-        <div class="table-1">
-            <div class="table-two">
-
-            </div>
+        <div class="table-author-info-container">
+            <table class="author-info-table" id="authorTable">
+                <thead>
+                <tr>
+                    <th style="width: 15px;">ID</th>
+                    <th style="width: 100px;">Name</th>
+                    <th style="width: 180px;">Url</th>
+                    <th style="width: 60px;">ResearchInterestScore</th>
+                    <th style="width: 70px;">Citations</th>
+                    <th style="width: 40px;">h-index</th>
+                    <th style="width: 40px;">AmountPublication</th>
+                    <th style="width: 100px;">Title</th>
+                    <th style="width: 180px;">UrlOnPublication</th>
+                </tr>
+                </thead>
+                <tbody id="authorInfoBody"></tbody>
+            </table>
         </div>
         <div class="frame-popular">
             <select class="popular-thematics" id="requestInTopic" name="requestInTopic" required>
@@ -84,8 +98,8 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('getPublicationInTopic').addEventListener('submit', function(event) {
-                event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+            document.getElementById('getTopicPublicationInfoButton').addEventListener('click', function(event) {
+                event.preventDefault();
 
                 var requestInTopic = document.getElementById('requestInTopic').value;
                 var numberOfPagesInTopic = document.getElementById('numberOfPagesInTopic').value;
@@ -98,7 +112,7 @@
                     .then(response => response.json())
                     .then(data => {
                         var tableBody = document.getElementById('publicationBody');
-                        // Добавляем данные в таблицу
+
                         data.forEach(function(Publication) {
                             var row = document.createElement('tr');
 
@@ -161,7 +175,7 @@
                         });
                     })
                     .catch(error => {
-                        // Обработка ошибок
+
                         console.log(error);
                     });
             });
@@ -182,8 +196,8 @@
             }
         }
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('getPublicationInSearch').addEventListener('submit', function(event) {
-                event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+            document.getElementById('getSearchPublicationInfoButton').addEventListener('click', function(event) {
+                event.preventDefault();
 
                 var requestInSearch = document.getElementById('requestInSearch').value;
                 var numberOfPagesInSearch = document.getElementById('numberOfPagesInSearch').value;
@@ -196,7 +210,7 @@
                     .then(response => response.json())
                     .then(data => {
                         var tableBody = document.getElementById('publicationBody');
-                        // Добавляем данные в таблицу
+
                         data.forEach(function(Publication) {
                             var row = document.createElement('tr');
 
@@ -255,48 +269,72 @@
                         });
                     })
                     .catch(error => {
-                        // Обработка ошибок
                         console.log(error);
                     });
             });
         });
 
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('getAuthorsList').addEventListener('click', function(event) {
-                event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+            document.getElementById('getAuthorInfoButton').addEventListener('click', function(event) {
+                event.preventDefault();
 
-                var url = '/parse/getAuthors';
+                var requestNameAuthor = document.getElementById('requestForAuthorInfo').value;
+
+                var url = '/parse/getAuthorInfo?requestNameAuthor=' + requestNameAuthor;
 
                 fetch(url, {
                     method: 'GET'
                 })
                     .then(response => response.json())
                     .then(data => {
-                        var authorsBody = document.getElementById('authorsInfoBody');
-                        data.forEach(function(Author) {
-                            var row = document.createElement('tr');
+                        var authorsBody = document.getElementById('authorInfoBody');
 
-                            var idAuthor = document.createElement('td');
-                            idAuthor.textContent = Author.id;
-                            row.appendChild(idAuthor);
+                        var AuthorInfo = data;
+                        var row = document.createElement('tr');
 
-                            var NameAuthor = document.createElement('td');
-                            NameAuthor.textContent = Author.name ? Author.name : "Отсутствует";
-                            row.appendChild(NameAuthor);
+                        var idAuthor = document.createElement('td');
+                        idAuthor.textContent = AuthorInfo.id;
+                        row.appendChild(idAuthor);
 
-                            var IdPublication = document.createElement('td');
-                            IdPublication.textContent = Author.idPublication;
-                            row.appendChild(IdPublication);
+                        var NameAuthor = document.createElement('td');
+                        NameAuthor.textContent = AuthorInfo.name
+                        row.appendChild(NameAuthor);
 
-                            var UrlOnAuthor = document.createElement('td');
-                            UrlOnAuthor.textContent = Author.url ? Author.url : "Отсутствует";
-                            row.appendChild(UrlOnAuthor);
+                        var UrlOnAuthor = document.createElement('td');
+                        UrlOnAuthor.textContent = AuthorInfo.url;
+                        row.appendChild(UrlOnAuthor);
 
-                            authorsBody.appendChild(row);
+                        var ResearchInterestScore = document.createElement('td');
+                        ResearchInterestScore.textContent = AuthorInfo.researchInterestScore;
+                        row.appendChild(ResearchInterestScore);
+
+                        var Citations = document.createElement('td');
+                        Citations.textContent = AuthorInfo.citations;
+                        row.appendChild(Citations);
+
+                        var hIndex = document.createElement('td');
+                        hIndex.textContent = AuthorInfo.hindex;
+                        row.appendChild(hIndex);
+
+                        var AmountPublication = document.createElement('td');
+                        AmountPublication.textContent = AuthorInfo.amountPublication;
+                        row.appendChild(AmountPublication);
+
+                        var TitlePublication = document.createElement('td');
+                        TitlePublication.textContent = AuthorInfo.publications.map(function (publication) {
+                            return publication.title;
                         });
+                        row.appendChild(TitlePublication);
+
+                        var UrlOnPublication = document.createElement('td');
+                        UrlOnPublication.textContent = AuthorInfo.publications.map(function (publication) {
+                            return publication.urlOnPublication;
+                        });
+                        row.appendChild(UrlOnPublication);
+
+                        authorsBody.appendChild(row);
                     })
                     .catch(error => {
-                        // Обработка ошибок
                         console.log(error);
                     });
             });

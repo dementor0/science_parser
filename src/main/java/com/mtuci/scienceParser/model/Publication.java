@@ -8,27 +8,31 @@ import java.util.List;
 
 @Data
 @Entity
+//@NoArgsConstructor
 @Table(name = "publication")
 public class Publication {
+//    public Publication(){
+//        id = UUID.randomUUID();
+//    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;      //порядковый номер
+    private Long id;
 
-    private String title; // заголовок статьи
+    private String title;
 
-    private String type; // вид статьи (публикация, статья, пост)
+    private String type;
 
-    private String textAvailable; // уровень доступности (полное содержание или нет)
+    private String textAvailable;
 
-    private Date dateCompletion; // дата публикации
+    private Date dateCompletion;
 
     @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "authors_id")
-    private List<Author> authors; // авторы
+    private List<Author> authors;
 
-    private String annotation; // аннотация
+    private String annotation;
 
-    private String urlOnPublication; //ссылка на статью
+    private String urlOnPublication;
 
-    private String urlForDownload; // ссылка на скачивание
+    private String urlForDownload;
 }

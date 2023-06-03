@@ -1,7 +1,9 @@
 package com.mtuci.scienceParser.service;
 
 import com.mtuci.scienceParser.model.Author;
+import com.mtuci.scienceParser.model.AuthorInfo;
 import com.mtuci.scienceParser.model.Publication;
+import com.mtuci.scienceParser.repository.AuthorInfoRepository;
 import com.mtuci.scienceParser.repository.AuthorRepository;
 import com.mtuci.scienceParser.repository.PublicationRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,8 @@ import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Service
@@ -35,8 +39,10 @@ public class PublicationService {
     private PublicationRepository publicationRepository;
     @Autowired
     private AuthorRepository authorRepository;
+    @Autowired
+    private AuthorInfoRepository authorInfoRepository;
     public List<Publication> parsePublicationInTopic(String request, Integer numberOfPages) throws InterruptedException {
-        WebElement productElement = null;
+        WebElement pageElement = null;
         WebElement annotationText;
         List<Publication> publicationsList = new ArrayList<>();
         List<Author> authorsList;
@@ -49,75 +55,65 @@ public class PublicationService {
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverTopic = new ChromeDriver(options);
         for (String str : urlOnPublicationForTopicSearch){
-            driverTopic.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+            driverTopic.manage().timeouts().pageLoadTimeout(1, TimeUnit.SECONDS);
             try {
                 driverTopic.get(str);
             }catch (TimeoutException ignore){}
 
             Publication publication = new Publication();
 
-            WebDriverWait wait = new WebDriverWait(driverTopic, Duration.ofSeconds(12));
+            WebDriverWait wait = new WebDriverWait(driverTopic, Duration.ofSeconds(10));
             By productSelector = By.cssSelector("#lite-page > main");
             try {
-                productElement = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
-            }catch (TimeoutException e){
+                pageElement = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
+            } catch (TimeoutException e){
                 driverTopic.get(str);
             }
            
-            List<WebElement> publicationElements = productElement.findElements(By.xpath("//*[@id=\"lite-page\"]/main/section"));
+            List<WebElement> publicationElements = pageElement.findElements(By.xpath("//*[@id=\"lite-page\"]/main/section"));
             for (WebElement publicationElement : publicationElements){
                 By elementTitle = By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-xl.nova-legacy-e-text--family-display.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-grey-900.research-detail-header-section__title");
                 WebElement publicationTitle = publicationElement.findElement(elementTitle);
-                log.info("Тайтл {}", publicationTitle.getText());
                 publication.setTitle(publicationTitle.getText());
 
                 By elementType = By.cssSelector(".nova-legacy-e-badge.nova-legacy-e-badge--color-green.nova-legacy-e-badge--display-inline.nova-legacy-e-badge--luminosity-high.nova-legacy-e-badge--size-l.nova-legacy-e-badge--theme-solid.nova-legacy-e-badge--radius-m.research-detail-header-section__badge");
                 WebElement publicationType = publicationElement.findElement(elementType);
-                log.info("Тип {}", publicationType.getText());
                 publication.setType(publicationType.getText());
 
                 try {
                     By elementAvailable = By.cssSelector(".nova-legacy-e-badge.nova-legacy-e-badge--color-green.nova-legacy-e-badge--display-inline.nova-legacy-e-badge--luminosity-medium.nova-legacy-e-badge--size-l.nova-legacy-e-badge--theme-ghost.nova-legacy-e-badge--radius-m.research-detail-header-section__badge");
                     WebElement publicationAvailable = publicationElement.findElement(elementAvailable);
-                    log.info("Доступ {}", publicationAvailable.getText());
                     publication.setTextAvailable(publicationAvailable.getText());
                 } catch (NoSuchElementException e) {
                     e.getMessage();
-                    System.out.println("Тип отсутствует");
+                    publication.setTextAvailable("Отсутствует");
                 }
 
                 WebElement dateElement = publicationElement.findElement(By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-m.nova-legacy-e-text--family-sans-serif.nova-legacy-e-text--spacing-xxs.nova-legacy-e-text--color-grey-700"));
                 WebElement dateCompletion = dateElement.findElement(By.cssSelector(".nova-legacy-e-list__item:first-child"));
                 LocalDate datePublication = convertMonth(dateCompletion);
-                log.info("Дата {}", datePublication);
                 publication.setDateCompletion(Date.valueOf(datePublication));
-
 
                 By annotationElement = By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-m.nova-legacy-e-text--family-sans-serif.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-grey-800.research-detail-middle-section__abstract");
                 try {
-                    annotationText = productElement.findElement(annotationElement);
-                    log.info("Аннотация {}", annotationText.getText());
+                    annotationText = pageElement.findElement(annotationElement);
                     publication.setAnnotation(annotationText.getText());
                 }catch (NoSuchElementException e){
                     publication.setAnnotation("Отсутствует");
                 }
                 try {
                     By urlElement = By.xpath("//*[@id=\"lite-page\"]/main/section/section[1]/section/div[1]/div/div[2]/div[1]/a");
-                    WebElement urlOnPage = productElement.findElement(urlElement);
+                    WebElement urlOnPage = pageElement.findElement(urlElement);
                     String urlForDownload = urlOnPage.getAttribute("href");
                     if (!urlForDownload.endsWith("/download")) {
                         String encodedUrlForDownload = urlForDownload.replaceAll("'", URLEncoder.encode("'", StandardCharsets.UTF_8));
-                        log.info("Ссылка {}", encodedUrlForDownload);
                         publication.setUrlForDownload(encodedUrlForDownload);
                     }
                     else{
-                        System.out.println("Ссылка для скачивания отсутствует");
                         publication.setUrlForDownload("Ссылка для скачивания отсутствует");
                     }
                 } catch (Exception e){
                     e.getMessage();
-                    System.out.println("Ссылка для скачивания отсутствует");
-                    log.info("Ссылка {}", str);
                     publication.setUrlForDownload("Ссылка для скачивания отсутствует");
                 }
                 publication.setUrlOnPublication(str);
@@ -128,7 +124,7 @@ public class PublicationService {
                 authorsList = parseAuthors(authorsWebElementsList, publication.getId());
                 authorRepository.saveAll(authorsList);
 
-                publication.setAuthors(authorsList);
+               publication.setAuthors(authorsList);
                 publicationRepository.save(publication);
                 publication = publicationRepository.findById(publication.getId()).orElse(null);
             }
@@ -159,59 +155,48 @@ public class PublicationService {
 
             WebDriverWait wait = new WebDriverWait(driverSearch, Duration.ofSeconds(10));
             By productSelector = By.cssSelector("#lite-page > main");
-            WebElement productElement = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
-            List<WebElement> publicationElements = productElement.findElements(By.xpath("//*[@id=\"lite-page\"]/main/section"));
+            WebElement pageElement = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
+            List<WebElement> publicationElements = pageElement.findElements(By.xpath("//*[@id=\"lite-page\"]/main/section"));
             for (WebElement publicationElement : publicationElements){
                 By elementTitle = By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-xl.nova-legacy-e-text--family-display.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-grey-900.research-detail-header-section__title");
                 WebElement publicationTitle = publicationElement.findElement(elementTitle);
-                log.info("Тайтл {}", publicationTitle.getText());
                 publication.setTitle(publicationTitle.getText());
 
                 By elementType = By.cssSelector(".nova-legacy-e-badge.nova-legacy-e-badge--color-green.nova-legacy-e-badge--display-inline.nova-legacy-e-badge--luminosity-high.nova-legacy-e-badge--size-l.nova-legacy-e-badge--theme-solid.nova-legacy-e-badge--radius-m.research-detail-header-section__badge");
                 WebElement publicationType = publicationElement.findElement(elementType);
-                log.info("Тип {}", publicationType.getText());
                 publication.setType(publicationType.getText());
 
                 try {
                     By elementAvailable = By.cssSelector(".nova-legacy-e-badge.nova-legacy-e-badge--color-green.nova-legacy-e-badge--display-inline.nova-legacy-e-badge--luminosity-medium.nova-legacy-e-badge--size-l.nova-legacy-e-badge--theme-ghost.nova-legacy-e-badge--radius-m.research-detail-header-section__badge");
                     WebElement publicationAvailable = publicationElement.findElement(elementAvailable);
-                    log.info("Доступ {}", publicationAvailable.getText());
                     publication.setTextAvailable(publicationAvailable.getText());
                 } catch (NoSuchElementException e) {
                     e.getMessage();
-                    System.out.println("Доступ отсутствует");
                     publication.setTextAvailable("Отсутсвует");
                 }
 
                 WebElement dateElement = publicationElement.findElement(By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-m.nova-legacy-e-text--family-sans-serif.nova-legacy-e-text--spacing-xxs.nova-legacy-e-text--color-grey-700"));
                 WebElement dateCompletion = dateElement.findElement(By.cssSelector(".nova-legacy-e-list__item:first-child"));
                 LocalDate datePublication = convertMonth(dateCompletion);
-                log.info("Дата {}", datePublication);
                 publication.setDateCompletion(Date.valueOf(datePublication));
 
-
                 By annotationElement = By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-m.nova-legacy-e-text--family-sans-serif.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-grey-800.research-detail-middle-section__abstract");
-                WebElement annotationText = productElement.findElement(annotationElement);
-                log.info("Аннотация {}", annotationText.getText());
+                WebElement annotationText = pageElement.findElement(annotationElement);
                 publication.setAnnotation(annotationText.getText());
 
                 try {
                     By urlElement = By.xpath("//*[@id=\"lite-page\"]/main/section/section[1]/section/div[1]/div/div[2]/div[1]/a");
-                    WebElement urlOnPage = productElement.findElement(urlElement);
+                    WebElement urlOnPage = pageElement.findElement(urlElement);
                     String urlForDownload = urlOnPage.getAttribute("href");
                     if (!urlForDownload.endsWith("/download")) {
                         String encodedUrlForDownload = urlForDownload.replaceAll("'", URLEncoder.encode("'", StandardCharsets.UTF_8));
-                        log.info("Ссылка {}", encodedUrlForDownload);
                         publication.setUrlForDownload(encodedUrlForDownload);
                     }
                     else{
-                        System.out.println("Ссылка для скачивания отсутствует");
                         publication.setUrlForDownload("Ссылка для скачивания отсутствует");
                     }
                 } catch (Exception e){
                     e.getMessage();
-                    System.out.println("Ссылка для скачивания отсутствует");
-                    log.info("Ссылка {}", str);
                     publication.setUrlForDownload("Ссылка для скачивания отсутствует");
                 }
                 publication.setUrlOnPublication(str);
@@ -242,8 +227,6 @@ public class PublicationService {
                 for (WebElement elementAuthors : authorsElement) {
                     List<WebElement> informationAboutAuthor = elementAuthors.findElements(By.cssSelector(".nova-legacy-e-link.nova-legacy-e-link--color-inherit.nova-legacy-e-link--theme-bare"));
                     for (WebElement elementInformation : informationAboutAuthor) {
-                        System.out.println(elementInformation.getText());
-                        System.out.println(elementInformation.getAttribute("href"));
                         author.setName(elementInformation.getText());
                         author.setUrl(elementInformation.getAttribute("href"));
                     }
@@ -251,15 +234,98 @@ public class PublicationService {
                 author.setIdPublication(id);
                 authorList.add(author);
                 authorRepository.save(author);
-            } catch (Exception e){ log.error("Автор не найден", e);}
+            } catch (Exception e){
+                e.getMessage();
+                author.setName("Автор не найден");
+                author.setUrl("Отсутствует");
+                log.warn("Автор не найден", e);
+            }
         }
         return authorList;
     }
-    public List<Author> getAllAuthors(){
-        return authorRepository.findAll();
+    public AuthorInfo parseAuthorInfo(String request) {
+        AuthorInfo authorInfo = new AuthorInfo();
+        List<Publication> publications = new ArrayList<>();
+
+        System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver.exe");
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--remote-allow-origins=*");
+        WebDriver driverAuthor = new ChromeDriver(options);
+
+        String authorNameInRequest = request.replace(" ","+");
+        String url = "https://www.researchgate.net/search.Search.html?query=" + authorNameInRequest + "&type=researcher";
+        String encodedUrlOnAuthorResearch = request.replace(" ","-");
+        String urlOnAuthorPublication = "https://www.researchgate.net/profile/" + encodedUrlOnAuthorResearch + "/research";
+        String urlOnAuthorProfile = "https://www.researchgate.net/profile/" + encodedUrlOnAuthorResearch;
+
+        try{
+            driverAuthor.manage().timeouts().pageLoadTimeout(4, TimeUnit.SECONDS);
+            try {
+                driverAuthor.get(url);
+            } catch (TimeoutException e){}
+
+            WebDriverWait wait = new WebDriverWait(driverAuthor, Duration.ofSeconds(3));
+            By authorSelector = By.cssSelector("#page-container");
+            WebElement pageElement = wait.until(ExpectedConditions.visibilityOfElementLocated(authorSelector));
+
+            WebElement buttonLogIn = pageElement.findElement(By.cssSelector(".header-login-item-link.gtm-header-login"));
+            buttonLogIn.click();
+            WebElement enableForm = pageElement.findElement(By.xpath("/html/body/div[6]"));
+            WebElement logInForm = enableForm.findElement(By.cssSelector(".login-form-card"));
+            logIn(logInForm);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(authorSelector));
+
+        } catch (NoSuchElementException e){
+            e.getMessage();
+            log.warn("Автор не найден", e);
+        } catch (TimeoutException e){}
+
+        try {
+            authorInfo.setUrl(urlOnAuthorProfile);
+            driverAuthor.manage().timeouts().pageLoadTimeout(4, TimeUnit.SECONDS);
+            driverAuthor.get(urlOnAuthorPublication);
+
+            By authorInfoSelector = By.cssSelector("#page-container");
+            WebDriverWait wait = new WebDriverWait(driverAuthor, Duration.ofSeconds(3));
+            WebElement pageElementInfo = wait.until(ExpectedConditions.visibilityOfElementLocated(authorInfoSelector));
+
+            WebElement authorName = pageElementInfo.findElement(By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-xl.nova-legacy-e-text--family-display.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-grey-900"));
+            authorInfo.setName(authorName.getText());
+
+            List<WebElement> valuesOfStatistic = pageElementInfo.findElements(By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-m.nova-legacy-e-text--family-sans-serif.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-inherit"));
+            authorInfo.setResearchInterestScore(Float.valueOf(valuesOfStatistic.get(0).getText()));
+            authorInfo.setCitations(Long.valueOf(valuesOfStatistic.get(1).getText()));
+            authorInfo.setHIndex(Long.valueOf(valuesOfStatistic.get(2).getText()));
+            valuesOfStatistic.clear();
+
+            List<WebElement> amountPublicationDiv = pageElementInfo.findElements(By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-m.nova-legacy-e-text--family-sans-serif.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-inherit.nova-legacy-c-nav__item-label"));
+            String text = amountPublicationDiv.get(1).getText();
+            Pattern pattern = Pattern.compile("\\d+");
+            Matcher matcher = pattern.matcher(text);
+            matcher.find();
+            String numberString = matcher.group();
+            authorInfo.setAmountPublication(Long.parseLong(numberString));
+
+            List<WebElement> publicationDiv = pageElementInfo.findElements(By.cssSelector(".nova-legacy-e-link.nova-legacy-e-link--color-inherit.nova-legacy-e-link--theme-bare"));
+            for (WebElement iter : publicationDiv){
+                Publication publication = new Publication();
+                String link = iter.getAttribute("href");
+                if(!iter.getText().contains("Source") && link.contains("publication")){
+                    publication.setTitle(iter.getText());
+                    publication.setUrlOnPublication(link);
+                }
+                publicationRepository.save(publication);
+                //authorInfo.setPublicationId(publication.getId());
+                publications.add(publication);
+            }
+            authorInfo.setPublications(publications);
+        } catch (TimeoutException e){}
+        authorInfoRepository.save(authorInfo);
+        driverAuthor.close();
+        return authorInfo;
     }
 
-    private List<String> findPublicationUrlInTopic(String request, Integer numberOfPages) throws InterruptedException {
+    private List<String> findPublicationUrlInTopic(String request, Integer numberOfPages) {
         List<String> urlOnPublicationForTopicSearch = new ArrayList<>();
         WebElement lastItem, link;
         String href;
@@ -278,11 +344,11 @@ public class PublicationService {
         while (numberOfPages!=0) {
             WebDriverWait wait = new WebDriverWait(driverTopic, Duration.ofSeconds(10));
             By productSelector = By.cssSelector("#lite-page > main > section.lite-page__content");
-            WebElement productElement = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
-            List<WebElement> publicationElements = productElement.findElements(By.xpath("//*[@id=\"lite-page\"]/main/section[3]"));
+            WebElement pageElement = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
+            List<WebElement> publicationElements = pageElement.findElements(By.xpath("//*[@id=\"lite-page\"]/main/section[3]"));
 
             // ссылка на след страницу
-            WebElement divPages = productElement.findElement(By.cssSelector(".nova-legacy-c-button-group.nova-legacy-c-button-group--wrap.nova-legacy-c-button-group--gutter-m.nova-legacy-c-button-group--orientation-horizontal.nova-legacy-c-button-group--width-auto"));
+            WebElement divPages = pageElement.findElement(By.cssSelector(".nova-legacy-c-button-group.nova-legacy-c-button-group--wrap.nova-legacy-c-button-group--gutter-m.nova-legacy-c-button-group--orientation-horizontal.nova-legacy-c-button-group--width-auto"));
             List<WebElement> items = divPages.findElements(By.cssSelector(".nova-legacy-c-button-group__item"));
             lastItem = items.get(items.size() - 1);
 
@@ -303,8 +369,8 @@ public class PublicationService {
                 href = link.getAttribute("href");
                 driverTopic.get(href);
             } catch (TimeoutException e) {
-                log.error("Ошибка: {}", e.getMessage());
-                System.out.println("Страница не найдена");
+                e.getMessage();
+                log.warn("Страница не найдена");
             }
             k++;
             numberOfPages--;
@@ -332,10 +398,10 @@ public class PublicationService {
         while (numberOfPages!=0) {
             WebDriverWait wait = new WebDriverWait(driverSearch, Duration.ofSeconds(10));
             By productSelector = By.className("search-indent-container");
-            WebElement productElementSearch = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
-            List<WebElement> publicationElementsSearch = productElementSearch.findElements(By.cssSelector(".nova-legacy-o-stack.nova-legacy-o-stack--gutter-xs.nova-legacy-o-stack--spacing-none.nova-legacy-o-stack--no-gutter-outside"));
+            WebElement pageElementSearch = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
+            List<WebElement> publicationElementsSearch = pageElementSearch.findElements(By.cssSelector(".nova-legacy-o-stack.nova-legacy-o-stack--gutter-xs.nova-legacy-o-stack--spacing-none.nova-legacy-o-stack--no-gutter-outside"));
             // ссылка на след страницу
-            List<WebElement> items = productElementSearch.findElements(By.cssSelector(".nova-legacy-c-button-group__item"));
+            List<WebElement> items = pageElementSearch.findElements(By.cssSelector(".nova-legacy-c-button-group__item"));
             lastItem = items.get(items.size() - 1);
 
             for (WebElement searchPublicationElement : publicationElementsSearch) {
@@ -355,14 +421,22 @@ public class PublicationService {
                 href = link.getAttribute("href");
                 driverSearch.get(href);
             } catch (TimeoutException e) {
-                log.error("Ошибка: {}", e.getMessage());
-                System.out.println("Страница не найдена");
+                e.getMessage();
+                log.warn("Страница не найдена");
             }
             k++;
             numberOfPages--;
         }
         driverSearch.close();
         return urlOnPublicationForSearch;
+    }
+    private void logIn(WebElement form){
+        WebElement inputEmail = form.findElement(By.id("input-header-login"));
+        inputEmail.sendKeys("d.v.chernyshov@edu.mtuci.ru");
+        WebElement inputPassword = form.findElement(By.id("input-header-password"));
+        inputPassword.sendKeys("PasswordForGate415");
+        WebElement buttonLogIn = form.findElement(By.cssSelector(".nova-legacy-c-button.nova-legacy-c-button--align-center.nova-legacy-c-button--radius-m.nova-legacy-c-button--size-m.nova-legacy-c-button--color-blue.nova-legacy-c-button--theme-solid.nova-legacy-c-button--width-full"));
+        buttonLogIn.click();
     }
     private Month convertToMonth(String monthStr) {
         switch (monthStr) {

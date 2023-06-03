@@ -16,24 +16,15 @@ databaseChangeLog:
               - column:
                   name: title
                   type: varchar(700)
-                  constraints:
-                    nullable: false
               - column:
                   name: type
                   type: varchar(255)
-                  constraints:
-                    nullable: false
               - column:
                   name: text_available
                   type: varchar(255)
               - column:
                   name: date_completion
                   type: date
-                  constraints:
-                    nullable: false
-#              - column:
-#                  name: authors
-#                  type: varchar(255)
               - column:
                   name: authors_id
                   type: bigint
@@ -43,8 +34,6 @@ databaseChangeLog:
               - column:
                   name: url_on_publication
                   type: text
-                  constraints:
-                    nullable: false
               - column:
                   name: url_for_download
                   type: text
