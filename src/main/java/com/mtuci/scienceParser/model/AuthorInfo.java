@@ -26,7 +26,7 @@ public class AuthorInfo {
     private Long amountPublication;
 
     @OneToMany
-    @JoinColumn(name = "publication_id")
+    @JoinColumn(name = "author_info_id")
     private List<Publication> publications;
 }
 

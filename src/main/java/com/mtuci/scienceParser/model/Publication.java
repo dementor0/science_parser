@@ -8,12 +8,8 @@ import java.util.List;
 
 @Data
 @Entity
-//@NoArgsConstructor
 @Table(name = "publication")
 public class Publication {
-//    public Publication(){
-//        id = UUID.randomUUID();
-//    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
