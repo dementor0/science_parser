@@ -323,7 +323,7 @@
     display: block;
 }
 .table-author-info-container {
-    height: 200px;
+    height: 550px;
     overflow-y: auto;
     overflow-x: auto;
     position: absolute;

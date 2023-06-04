@@ -17,6 +17,9 @@ databaseChangeLog:
                   name: title
                   type: varchar(700)
               - column:
+                  name: author_info_id
+                  type: bigint
+              - column:
                   name: type
                   type: varchar(255)
               - column:
@@ -38,9 +41,8 @@ databaseChangeLog:
                   name: url_for_download
                   type: text
         - addForeignKeyConstraint:
-            baseColumnNames: authors_id
+            baseColumnNames: author_info_id
             baseTableName: publication
-            initiallyDeferred: false
             referencedColumnNames: id
-            referencedTableName: author
-            constraintName: author_publication_fk
+            referencedTableName: author_info
+            constraintName: fk_publication_author_info

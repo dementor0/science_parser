@@ -52,12 +52,17 @@
                 <tr>
                     <th style="width: 15px;">ID</th>
                     <th style="width: 100px;">Name</th>
-                    <th style="width: 180px;">Url</th>
-                    <th style="width: 60px;">ResearchInterestScore</th>
-                    <th style="width: 70px;">Citations</th>
-                    <th style="width: 40px;">h-index</th>
-                    <th style="width: 40px;">AmountPublication</th>
-                    <th style="width: 100px;">Title</th>
+                    <th style="width: 150px;">Url</th>
+                    <th style="width: 40px;">
+                        Research<br>
+                        Interest<br>
+                        Score</th>
+                    <th style="width: 40px;">Citations</th>
+                    <th style="width: 30px;">h-index</th>
+                    <th style="width: 40px;">
+                        Amount<br>
+                        Publication</th>
+                    <th style="width: 150px;">Title</th>
                     <th style="width: 180px;">UrlOnPublication</th>
                 </tr>
                 </thead>
@@ -321,15 +326,26 @@
                         row.appendChild(AmountPublication);
 
                         var TitlePublication = document.createElement('td');
-                        TitlePublication.textContent = AuthorInfo.publications.map(function (publication) {
-                            return publication.title;
-                        });
+                        TitlePublication.innerHTML = AuthorInfo.publications
+                            .filter(function(publication) {
+                                return publication.title && !publication.title.includes("null");
+                            })
+                            .map(function(publication, index) {
+                                return (index + 1) + ") " + publication.title + "<br>";
+                            })
+                            .join("");
                         row.appendChild(TitlePublication);
 
                         var UrlOnPublication = document.createElement('td');
-                        UrlOnPublication.textContent = AuthorInfo.publications.map(function (publication) {
-                            return publication.urlOnPublication;
-                        });
+                        UrlOnPublication.innerHTML = AuthorInfo.publications
+                            .filter(function(publication) {
+                                return publication.urlOnPublication && !publication.urlOnPublication.includes("null");
+                            })
+                            .map(function(publication, index) {
+                                return (index + 1) + ") " + publication.urlOnPublication + "<br>";
+                            })
+                            .join("");
+
                         row.appendChild(UrlOnPublication);
 
                         authorsBody.appendChild(row);

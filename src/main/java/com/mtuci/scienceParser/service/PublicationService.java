@@ -146,7 +146,7 @@ public class PublicationService {
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverSearch = new ChromeDriver(options);
         for (String str : urlOnPublicationForSearch){
-            driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+            //driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
             try {
                 driverSearch.get(str);
             }catch (TimeoutException ignore){}
@@ -201,15 +201,12 @@ public class PublicationService {
                 }
                 publication.setUrlOnPublication(str);
 
-                publicationRepository.save(publication);
-
                 authorsWebElementsList = publicationElement.findElements(By.cssSelector(".nova-legacy-l-flex__item.research-detail-author-list__item.research-detail-author-list__item--has-image"));
                 authorsList = parseAuthors(authorsWebElementsList, publication.getId());
                 authorRepository.saveAll(authorsList);
 
                 publication.setAuthors(authorsList);
                 publicationRepository.save(publication);
-                publication = publicationRepository.findById(publication.getId()).orElse(null);
             }
              publicationsList.add(publication);
         }
@@ -313,14 +310,24 @@ public class PublicationService {
                 if(!iter.getText().contains("Source") && link.contains("publication")){
                     publication.setTitle(iter.getText());
                     publication.setUrlOnPublication(link);
+                    publicationRepository.save(publication);
                 }
-                publicationRepository.save(publication);
-                //authorInfo.setPublicationId(publication.getId());
                 publications.add(publication);
+                authorInfo.setPublications(publications);
             }
-            authorInfo.setPublications(publications);
+            publicationRepository.saveAll(publications);
+            authorInfoRepository.save(authorInfo);
         } catch (TimeoutException e){}
-        authorInfoRepository.save(authorInfo);
+        catch (NoSuchElementException e){
+            Publication publication = new Publication();
+            authorInfo.setName("Отсутствует");
+            authorInfo.setUrl("Отсутствует");
+            authorInfo.setCitations(0L);
+            authorInfo.setHIndex(0L);
+            authorInfo.setAmountPublication(0L);
+            publication.setTitle("Отсутствует");
+            publication.setUrlOnPublication("Отсутствует");
+        }
         driverAuthor.close();
         return authorInfo;
     }
@@ -388,7 +395,7 @@ public class PublicationService {
         WebDriver driverSearch = new ChromeDriver(options);
 
         String url = "https://www.researchgate.net/search/publication?q=" + request;
-        driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+        //driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
         try {
             driverSearch.get(url);
         }catch (TimeoutException ignore){}

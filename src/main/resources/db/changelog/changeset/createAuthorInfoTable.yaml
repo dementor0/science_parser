@@ -40,10 +40,3 @@ databaseChangeLog:
               - column:
                   name: url_on_publication
                   type: text
-        - addForeignKeyConstraint:
-            baseColumnNames: publication_id
-            baseTableName: author_info
-            initiallyDeferred: false
-            referencedColumnNames: id
-            referencedTableName: publication
-            constraintName: author_publications_fk
