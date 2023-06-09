@@ -5,7 +5,6 @@ databaseChangeLog:
       file: db/changelog/changeset/createAuthorInfoTable.yaml
   - include:
       file: db/changelog/changeset/createPublicationTable.yaml
-  - include:
-      file: db/changelog/changeset/createAuthorPublicationTable.yaml
+
 
 

@@ -24,7 +24,7 @@ databaseChangeLog:
                   type: float
               - column:
                   name: citations
-                  type: bigint
+                  type: varchar(255)
               - column:
                   name: h_index
                   type: bigint
