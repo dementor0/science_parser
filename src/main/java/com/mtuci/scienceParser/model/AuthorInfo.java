@@ -19,7 +19,7 @@ public class AuthorInfo {
 
     private Float researchInterestScore;
 
-    private Long citations;
+    private String citations;
 
     private Long hIndex;
 

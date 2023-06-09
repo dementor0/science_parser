@@ -54,6 +54,7 @@ public class PublicationService {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverTopic = new ChromeDriver(options);
+        options.setHeadless(true);
         for (String str : urlOnPublicationForTopicSearch){
             driverTopic.manage().timeouts().pageLoadTimeout(1, TimeUnit.SECONDS);
             try {
@@ -145,8 +146,9 @@ public class PublicationService {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverSearch = new ChromeDriver(options);
+        options.setHeadless(true);
         for (String str : urlOnPublicationForSearch){
-            //driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+            driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
             try {
                 driverSearch.get(str);
             }catch (TimeoutException ignore){}
@@ -248,6 +250,7 @@ public class PublicationService {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverAuthor = new ChromeDriver(options);
+        options.setHeadless(true);
 
         String authorNameInRequest = request.replace(" ","+");
         String url = "https://www.researchgate.net/search.Search.html?query=" + authorNameInRequest + "&type=researcher";
@@ -260,7 +263,7 @@ public class PublicationService {
             try {
                 driverAuthor.get(url);
             } catch (TimeoutException e){}
-
+            //driverAuthor.navigate().refresh();
             WebDriverWait wait = new WebDriverWait(driverAuthor, Duration.ofSeconds(3));
             By authorSelector = By.cssSelector("#page-container");
             WebElement pageElement = wait.until(ExpectedConditions.visibilityOfElementLocated(authorSelector));
@@ -291,7 +294,7 @@ public class PublicationService {
 
             List<WebElement> valuesOfStatistic = pageElementInfo.findElements(By.cssSelector(".nova-legacy-e-text.nova-legacy-e-text--size-m.nova-legacy-e-text--family-sans-serif.nova-legacy-e-text--spacing-none.nova-legacy-e-text--color-inherit"));
             authorInfo.setResearchInterestScore(Float.valueOf(valuesOfStatistic.get(0).getText()));
-            authorInfo.setCitations(Long.valueOf(valuesOfStatistic.get(1).getText()));
+            authorInfo.setCitations(valuesOfStatistic.get(1).getText());
             authorInfo.setHIndex(Long.valueOf(valuesOfStatistic.get(2).getText()));
             valuesOfStatistic.clear();
 
@@ -304,29 +307,42 @@ public class PublicationService {
             authorInfo.setAmountPublication(Long.parseLong(numberString));
 
             List<WebElement> publicationDiv = pageElementInfo.findElements(By.cssSelector(".nova-legacy-e-link.nova-legacy-e-link--color-inherit.nova-legacy-e-link--theme-bare"));
-            for (WebElement iter : publicationDiv){
-                Publication publication = new Publication();
-                String link = iter.getAttribute("href");
-                if(!iter.getText().contains("Source") && link.contains("publication")){
-                    publication.setTitle(iter.getText());
-                    publication.setUrlOnPublication(link);
-                    publicationRepository.save(publication);
+            int previousSize = 0;
+            int currentSize = publicationDiv.size();
+            while (currentSize > previousSize) {
+                JavascriptExecutor jsExecutor = (JavascriptExecutor) driverAuthor;
+                jsExecutor.executeScript("window.scrollTo(0, document.body.scrollHeight)");
+                Thread.sleep(1000);
+                publicationDiv = pageElementInfo.findElements(By.cssSelector(".nova-legacy-e-link.nova-legacy-e-link--color-inherit.nova-legacy-e-link--theme-bare"));
+                for (int i = previousSize; i < currentSize; i++) {
+                    WebElement iter = publicationDiv.get(i);
+                    Publication publication = new Publication();
+                    String link = iter.getAttribute("href");
+                    if (!iter.getText().contains("Source") && link.contains("publication")) {
+                        publication.setTitle(iter.getText());
+                        publication.setUrlOnPublication(link);
+                    }
+                    publications.add(publication);
+                    authorInfo.setPublications(publications);
                 }
-                publications.add(publication);
-                authorInfo.setPublications(publications);
+                publicationRepository.saveAll(publications);
+                authorInfoRepository.save(authorInfo);
+
+                previousSize = currentSize;
+                currentSize = publicationDiv.size();
             }
-            publicationRepository.saveAll(publications);
-            authorInfoRepository.save(authorInfo);
         } catch (TimeoutException e){}
         catch (NoSuchElementException e){
             Publication publication = new Publication();
             authorInfo.setName("Отсутствует");
             authorInfo.setUrl("Отсутствует");
-            authorInfo.setCitations(0L);
+            authorInfo.setCitations("Отсутствует");
             authorInfo.setHIndex(0L);
             authorInfo.setAmountPublication(0L);
             publication.setTitle("Отсутствует");
             publication.setUrlOnPublication("Отсутствует");
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
         driverAuthor.close();
         return authorInfo;
@@ -340,11 +356,13 @@ public class PublicationService {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverTopic = new ChromeDriver(options);
+        options.setHeadless(true);
 
         String url = "https://www.researchgate.net/topic/" + request + "/publications";
         driverTopic.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
         try {
             driverTopic.get(url);
+            driverTopic.navigate().refresh();
         }catch (TimeoutException ignore){}
 
         int k = 1;
@@ -393,11 +411,13 @@ public class PublicationService {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverSearch = new ChromeDriver(options);
+        options.setHeadless(true);
 
         String url = "https://www.researchgate.net/search/publication?q=" + request;
-        //driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+        driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
         try {
             driverSearch.get(url);
+            driverSearch.navigate().refresh();
         }catch (TimeoutException ignore){}
 
 

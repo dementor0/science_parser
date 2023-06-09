@@ -39,6 +39,6 @@ public class PublicationController {
 
     @GetMapping
     public String home(){
-        return "ScienceParserDesktop1";
+        return "ScienceParserGUI";
     }
 }

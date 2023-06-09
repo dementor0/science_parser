@@ -1,316 +1,360 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Система парсинга</title>
+    <title>Парсер научных статей</title>
+    <link rel="stylesheet" th:href="@{/style.css?v=123456}">
+    <link href="https://fonts.cdnfonts.com/css/lato" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-        }
-
-        form {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        input[type="submit"] {
-            padding: 5px;
-        }
-
-        input[type="submit"] {
-            cursor: pointer;
-        }
-
-        #tableContainer1 {
-            height: 300px;
-            overflow-y: auto;
-        }
-
-        #tableContainer2 {
-            height: 300px;
-            overflow-y: auto;
-        }
-
-        #publicationsTable {
-            width: 100%;
-            table-layout: fixed;
-            border-collapse: collapse;
-        }
-        #authorsInfoTable {
-            width: 100%;
-            table-layout: fixed;
-            border-collapse: collapse;
-        }
-
-        #publicationsTable thead th,
-        #publicationsTable tbody td {
-            padding: 10px;
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-align: left;
-            border: 1px solid #ccc;
-        }
-        #authorsInfoTable thead th,
-        #authorsInfoTable tbody td {
-            padding: 10px;
-            text-align: left;
-            border: 1px solid #ccc;
-        }
+        @import url('https://fonts.cdnfonts.com/css/lato');
     </style>
 </head>
 <body>
-<h1>Система парсинга информации</h1>
-<form id="getPublicationInTopic">
-    <label for="requestInTopic">Введите запрос для поиска статей:</label>
-    <input type="text" id="requestInTopic" name="requestInTopic" required><br><br>
+    <div class="desktop-1">
+        <img alt="" class="image-1" src="/image.png">
+        <div class="top-name">
+            <p class="top-name1">Парсер научных статей</p>
+        </div>
+        <div class="div-author-text">
+            <p class="text-author-info">
+                Ведите автора для получения информации о нем
+            </p>
+            <input type="text" class="div-author-info-input" id="requestForAuthorInfo" name="requestForAuthorInfo" required><br><br>
+        </div>
+        <form id="getPublicationInTopic">
+            <button class="button-get-popular" id="getTopicPublicationInfoButton">Получить информацию</button>
+        </form>
+        <form id="getPublicationInSearch">
+            <button class="button-get-other" id="getSearchPublicationInfoButton">Получить информацию</button>
+        </form>
+        <button class="button-get-author-info" id="getAuthorInfoButton">Информация об авторе</button>
+        <div class="publication-table-container">
+            <table class="publication-table" id="publicationsTable">
+                <thead>
+                <tr>
+                    <th style="width: 15px;">ID</th>
+                    <th style="width: 100px;">Title</th>
+                    <th style="width: 40px;">Type</th>
+                    <th style="width: 60px;">TextAvailable</th>
+                    <th style="width: 75px;">DateCompletion</th>
+                    <th style="width: 120px;">Authors</th>
+                    <th style="width: 200px;">Annotation</th>
+                    <th style="width: 180px;">UrlOnPublication</th>
+                    <th style="width: 180px;">UrlForDownload</th>
+                </tr>
+                </thead>
+                <tbody id="publicationBody"></tbody>
+            </table>
+        </div>
+        <div class="table-author-info-container">
+            <table class="author-info-table" id="authorTable">
+                <thead>
+                <tr>
+                    <th style="width: 15px;">ID</th>
+                    <th style="width: 100px;">Name</th>
+                    <th style="width: 150px;">Url</th>
+                    <th style="width: 40px;">
+                        Research<br>
+                        Interest<br>
+                        Score</th>
+                    <th style="width: 40px;">Citations</th>
+                    <th style="width: 30px;">h-index</th>
+                    <th style="width: 40px;">
+                        Amount<br>
+                        Publication</th>
+                    <th style="width: 150px;">Title</th>
+                    <th style="width: 180px;">UrlOnPublication</th>
+                </tr>
+                </thead>
+                <tbody id="authorInfoBody"></tbody>
+            </table>
+        </div>
+        <div class="frame-popular">
+            <select class="popular-thematics" id="requestInTopic" name="requestInTopic" required>
+                <option value="Engineering">Engineering</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Biology">Biology</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Climate Change">Climate Change</option>
+                <option value="Medicine">Medicine</option>
+                <option value="Physics">Physics</option>
+                <option value="Social Science">Social Science</option>
+                <option value="Astrophysics">Astrophysics</option>
+                <option value="Chemistry">Chemistry</option>
+            </select><br><br>
+            <p class="num-page-popular">
+                Введите количество страниц
+            </p>
+            <input class="div-num-page-popular" type="number" id="numberOfPagesInTopic" name="numberOfPagesInTopic" min="1" max="20" required><br><br>
+            <p class="popular-text">
+                Выберите популярную тематику
+            </p>
+        </div>
+        <div class="frame-other-thematics">
+            <input type="text" class="div-other-thematics" id="requestInSearch" name="requestInSearch" required><br><br>
+            <p class="num-page-other-thematics">
+                Введите количество страниц
+            </p>
+            <input class="div-num-page-other" type="number" id="numberOfPagesInSearch" name="numberOfPagesInSearch" min="1" max="20" required><br><br>
+            <p class="text-other-thematics">
+                Укажите тематику для поиска
+            </p>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('getTopicPublicationInfoButton').addEventListener('click', function(event) {
+                event.preventDefault();
 
-    <label for="numberOfPagesInTopic">Введите количество страниц:</label>
-    <input type="number" id="numberOfPagesInTopic" name="numberOfPagesInTopic" min="1" max="20"><br><br>
+                var requestInTopic = document.getElementById('requestInTopic').value;
+                var numberOfPagesInTopic = document.getElementById('numberOfPagesInTopic').value;
 
-    <input type="submit" value="Получить информацию">
-</form>
+                var url = '/parse/getPublicationInTopic?requestInTopic=' + encodeURIComponent(requestInTopic) + '&numberOfPagesInTopic=' + encodeURIComponent(numberOfPagesInTopic);
 
-<form id="getPublicationInSearch">
-    <label for="requestInSearch">Введите запрос для поиска статей:</label>
-    <input type="text" id="requestInSearch" name="requestInSearch" required><br><br>
+                fetch(url, {
+                    method: 'GET'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        var tableBody = document.getElementById('publicationBody');
 
-    <label for="numberOfPagesInSearch">Введите количество страниц:</label>
-    <input type="number" id="numberOfPagesInSearch" name="numberOfPagesInSearch" min="1" max="20"><br><br>
+                        data.forEach(function(Publication) {
+                            var row = document.createElement('tr');
 
-    <input type="submit" value="Получить информацию">
-</form>
+                            var idPublication = document.createElement('td');
+                            idPublication.textContent = Publication.id;
+                            row.appendChild(idPublication);
 
-<div id="tableContainer1">
-    <table id="publicationsTable">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Type</th>
-            <th>TextAvailable</th>
-            <th>DateCompletion</th>
-            <th>AuthorsNames</th>
-            <th>Authors</th>
-            <th>Annotation</th>
-            <th>UrlOnPublication</th>
-            <th>UrlForDownload</th>
-        </tr>
-        </thead>
-        <tbody id="publicationBody"></tbody>
-    </table>
-</div>
+                            var Title = document.createElement('td');
+                            Title.textContent = Publication.title;
+                            row.appendChild(Title);
 
-<div id="tableContainer2">
-    </table>
-    <table id="authorsInfoTable">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>IdPublication</th>
-            <th>Name</th>
-            <th>Url</th>
-        </tr>
-        </thead>
-        <tbody id="authorsInfoBody"></tbody>
-    </table>
-</div>
+                            var Type = document.createElement('td');
+                            Type.textContent = Publication.type;
+                            row.appendChild(Type);
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('getPublicationInTopic').addEventListener('submit', function(event) {
-            event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+                            var TextAvailable = document.createElement('td');
+                            TextAvailable.textContent = Publication.textAvailable;
+                            row.appendChild(TextAvailable);
 
-            var requestInTopic = document.getElementById('requestInTopic').value;
-            var numberOfPagesInTopic = document.getElementById('numberOfPagesInTopic').value;
+                            var DateCompletion = document.createElement('td');
+                            DateCompletion.textContent = Publication.dateCompletion;
+                            row.appendChild(DateCompletion);
 
-            var url = '/parse/getPublicationInTopic?requestInTopic=' + encodeURIComponent(requestInTopic) + '&numberOfPagesInTopic=' + encodeURIComponent(numberOfPagesInTopic);
+                            var Authors = document.createElement('td');
+                            if (Publication.authors.length > 0) {
+                                Authors.textContent = Publication.authors.map(function(author) {
+                                    return author.name;
+                                }).join(', ');
+                            } else {
+                                Authors.textContent = "Отсутствует";
+                            }
+                            row.appendChild(Authors);
 
-            fetch(url, {
-                method: 'GET'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    var tableBody = document.getElementById('publicationBody');
-                    var authorsBody = document.getElementById('authorsInfoBody')
-                    // Добавляем данные в таблицу
-                    data.forEach(function(Publication) {
-                        var row = document.createElement('tr');
+                            var Annotation = document.createElement('td');
+                            var annotationDiv = document.createElement('div');
+                            annotationDiv.classList.add('annotation-div');
 
-                        var idPublication = document.createElement('td');
-                        idPublication.textContent = Publication.id;
-                        row.appendChild(idPublication);
+                            var annotationText = document.createElement('div');
+                            annotationText.classList.add('annotation-text');
+                            annotationText.textContent = Publication.annotation;
+                            annotationDiv.appendChild(annotationText);
 
-                        var Title = document.createElement('td');
-                        Title.textContent = Publication.title;
-                        row.appendChild(Title);
+                            var showButton = document.createElement('button');
+                            showButton.textContent = 'Показать';
+                            showButton.addEventListener('click', showAnnotationText);
+                            annotationDiv.appendChild(showButton);
 
-                        var Type = document.createElement('td');
-                        Type.textContent = Publication.type;
-                        row.appendChild(Type);
+                            Annotation.appendChild(annotationDiv);
+                            row.appendChild(Annotation);
 
-                        var TextAvailable = document.createElement('td');
-                        TextAvailable.textContent = Publication.textAvailable;
-                        row.appendChild(TextAvailable);
+                            var UrlOnPublication = document.createElement('td');
+                            UrlOnPublication.textContent = Publication.urlOnPublication;
+                            row.appendChild(UrlOnPublication);
 
-                        var DateCompletion = document.createElement('td');
-                        DateCompletion.textContent = Publication.dateCompletion;
-                        row.appendChild(DateCompletion);
+                            var UrlForDownload = document.createElement('td');
+                            UrlForDownload.textContent = Publication.urlForDownload;
+                            row.appendChild(UrlForDownload);
 
-                        var AuthorNames = document.createElement('td');
-                        AuthorNames.textContent = Publication.authorNames;
-                        row.appendChild(AuthorNames);
+                            tableBody.appendChild(row);
+                        });
+                    })
+                    .catch(error => {
 
-                        var Authors = document.createElement('td');
-                        Authors.textContent = Publication.authors;
-                        row.appendChild(Authors);
-
-                        var Annotation = document.createElement('td');
-                        Annotation.textContent = Publication.annotation;
-                        row.appendChild(Annotation);
-
-                        var UrlOnPublication = document.createElement('td');
-                        UrlOnPublication.textContent = Publication.urlOnPublication;
-                        row.appendChild(UrlOnPublication);
-
-                        var UrlForDownload = document.createElement('td');
-                        UrlForDownload.textContent = Publication.urlForDownload;
-                        row.appendChild(UrlForDownload);
-
-                        tableBody.appendChild(row);
+                        console.log(error);
                     });
-                    data.forEach(function(Author) {
+            });
+        });
+        function showAnnotationText(event) {
+            var button = event.target;
+            var div = button.parentNode;
+            var annotationText = div.querySelector('.annotation-text');
+
+            if (div.classList.contains('expanded')) {
+                annotationText.style.display = 'none';
+                button.textContent = 'Показать';
+                div.classList.remove('expanded');
+            } else {
+                annotationText.style.display = 'block';
+                button.textContent = 'Скрыть';
+                div.classList.add('expanded');
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('getSearchPublicationInfoButton').addEventListener('click', function(event) {
+                event.preventDefault();
+
+                var requestInSearch = document.getElementById('requestInSearch').value;
+                var numberOfPagesInSearch = document.getElementById('numberOfPagesInSearch').value;
+
+                var url = '/parse/getPublicationInSearch?requestInSearch=' + encodeURIComponent(requestInSearch) + '&numberOfPagesInSearch=' + encodeURIComponent(numberOfPagesInSearch);
+
+                fetch(url, {
+                    method: 'GET'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        var tableBody = document.getElementById('publicationBody');
+
+                        data.forEach(function(Publication) {
+                            var row = document.createElement('tr');
+
+                            var idPublication = document.createElement('td');
+                            idPublication.textContent = Publication.id;
+                            row.appendChild(idPublication);
+
+                            var Title = document.createElement('td');
+                            Title.textContent = Publication.title;
+                            row.appendChild(Title);
+
+                            var Type = document.createElement('td');
+                            Type.textContent = Publication.type;
+                            row.appendChild(Type);
+
+                            var TextAvailable = document.createElement('td');
+                            TextAvailable.textContent = Publication.textAvailable;
+                            row.appendChild(TextAvailable);
+
+                            var DateCompletion = document.createElement('td');
+                            DateCompletion.textContent = Publication.dateCompletion;
+                            row.appendChild(DateCompletion);
+
+                            var Authors = document.createElement('td');
+                            Authors.textContent = Publication.authors.map(function(author) {
+                                return author.name;
+                            }).join(', ');
+                            row.appendChild(Authors);
+
+                            var Annotation = document.createElement('td');
+                            var annotationDiv = document.createElement('div');
+                            annotationDiv.classList.add('annotation-div');
+
+                            var annotationText = document.createElement('div');
+                            annotationText.classList.add('annotation-text');
+                            annotationText.textContent = Publication.annotation;
+                            annotationDiv.appendChild(annotationText);
+
+                            var showButton = document.createElement('button');
+                            showButton.textContent = 'Показать';
+                            showButton.addEventListener('click', showAnnotationText);
+                            annotationDiv.appendChild(showButton);
+
+                            Annotation.appendChild(annotationDiv);
+                            row.appendChild(Annotation);
+
+                            var UrlOnPublication = document.createElement('td');
+                            UrlOnPublication.textContent = Publication.urlOnPublication;
+                            row.appendChild(UrlOnPublication);
+
+                            var UrlForDownload = document.createElement('td');
+                            UrlForDownload.textContent = Publication.urlForDownload;
+                            row.appendChild(UrlForDownload);
+
+                            tableBody.appendChild(row);
+                        });
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('getAuthorInfoButton').addEventListener('click', function(event) {
+                event.preventDefault();
+
+                var requestNameAuthor = document.getElementById('requestForAuthorInfo').value;
+
+                var url = '/parse/getAuthorInfo?requestNameAuthor=' + requestNameAuthor;
+
+                fetch(url, {
+                    method: 'GET'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        var authorsBody = document.getElementById('authorInfoBody');
+
+                        var AuthorInfo = data;
                         var row = document.createElement('tr');
 
                         var idAuthor = document.createElement('td');
-                        idAuthor.textContent = Author.id;
+                        idAuthor.textContent = AuthorInfo.id;
                         row.appendChild(idAuthor);
 
-                        var IdPublication = document.createElement('td');
-                        IdPublication.textContent = Author.idPublication;
-                        row.appendChild(IdPublication);
-
                         var NameAuthor = document.createElement('td');
-                        NameAuthor.textContent = Author.name;
+                        NameAuthor.textContent = AuthorInfo.name
                         row.appendChild(NameAuthor);
 
                         var UrlOnAuthor = document.createElement('td');
-                        UrlOnAuthor.textContent = Author.url;
+                        UrlOnAuthor.textContent = AuthorInfo.url;
                         row.appendChild(UrlOnAuthor);
 
-                        authorsBody.appendChild(row);
-                    });
-                })
-                .catch(error => {
-                    // Обработка ошибок
-                    console.log(error);
-                });
-        });
-    });
+                        var ResearchInterestScore = document.createElement('td');
+                        ResearchInterestScore.textContent = AuthorInfo.researchInterestScore;
+                        row.appendChild(ResearchInterestScore);
 
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('getPublicationInSearch').addEventListener('submit', function(event) {
-            event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+                        var Citations = document.createElement('td');
+                        Citations.textContent = AuthorInfo.citations;
+                        row.appendChild(Citations);
 
-            var requestInSearch = document.getElementById('requestInSearch').value;
-            var numberOfPagesInSearch = document.getElementById('numberOfPagesInSearch').value;
+                        var hIndex = document.createElement('td');
+                        hIndex.textContent = AuthorInfo.hindex;
+                        row.appendChild(hIndex);
 
-            var url = '/parse/getPublicationInSearch?requestInSearch=' + encodeURIComponent(requestInSearch) + '&numberOfPagesInSearch=' + encodeURIComponent(numberOfPagesInSearch);
+                        var AmountPublication = document.createElement('td');
+                        AmountPublication.textContent = AuthorInfo.amountPublication;
+                        row.appendChild(AmountPublication);
 
-            fetch(url, {
-                method: 'GET'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    var tableBody = document.getElementById('publicationBody');
-                    var authorsBody = document.getElementById('authorsInfoBody')
-                    // Добавляем данные в таблицу
-                    data.forEach(function(Publication) {
-                        var row = document.createElement('tr');
-
-                        var idPublication = document.createElement('td');
-                        idPublication.textContent = Publication.id;
-                        row.appendChild(idPublication);
-
-                        var Title = document.createElement('td');
-                        Title.textContent = Publication.title;
-                        row.appendChild(Title);
-
-                        var Type = document.createElement('td');
-                        Type.textContent = Publication.type;
-                        row.appendChild(Type);
-
-                        var TextAvailable = document.createElement('td');
-                        TextAvailable.textContent = Publication.textAvailable;
-                        row.appendChild(TextAvailable);
-
-                        var DateCompletion = document.createElement('td');
-                        DateCompletion.textContent = Publication.dateCompletion;
-                        row.appendChild(DateCompletion);
-
-                        var AuthorNames = document.createElement('td');
-                        AuthorNames.textContent = Publication.authorNames;
-                        row.appendChild(AuthorNames);
-
-                        var Authors = document.createElement('td');
-                        Authors.textContent = Publication.authors;
-                        row.appendChild(Authors);
-
-                        var Annotation = document.createElement('td');
-                        Annotation.textContent = Publication.annotation;
-                        row.appendChild(Annotation);
+                        var TitlePublication = document.createElement('td');
+                        TitlePublication.innerHTML = AuthorInfo.publications
+                            .filter(function(publication) {
+                                return publication.title && !publication.title.includes("null");
+                            })
+                            .map(function(publication, index) {
+                                return (index + 1) + ") " + publication.title + "<br>";
+                            })
+                            .join("");
+                        row.appendChild(TitlePublication);
 
                         var UrlOnPublication = document.createElement('td');
-                        UrlOnPublication.textContent = Publication.urlOnPublication;
+                        UrlOnPublication.innerHTML = AuthorInfo.publications
+                            .filter(function(publication) {
+                                return publication.urlOnPublication && !publication.urlOnPublication.includes("null");
+                            })
+                            .map(function(publication, index) {
+                                return (index + 1) + ") " + publication.urlOnPublication + "<br>";
+                            })
+                            .join("");
+
                         row.appendChild(UrlOnPublication);
 
-                        var UrlForDownload = document.createElement('td');
-                        UrlForDownload.textContent = Publication.urlForDownload;
-                        row.appendChild(UrlForDownload);
-
-                        tableBody.appendChild(row);
-                    });
-                    data.forEach(function(Author) {
-                        var row = document.createElement('tr');
-
-                        var idAuthor = document.createElement('td');
-                        idAuthor.textContent = Author.id;
-                        row.appendChild(idAuthor);
-                        var NameAuthor = document.createElement('td');
-                        NameAuthor.textContent = Author.name;
-                        row.appendChild(NameAuthor);
-
-                        var IdPublication = document.createElement('td');
-                        IdPublication.textContent = Author.idPublication;
-                        row.appendChild(IdPublication);
-
-
-
-                        var UrlOnAuthor = document.createElement('td');
-                        UrlOnAuthor.textContent = Author.url;
-                        row.appendChild(UrlOnAuthor);
-
                         authorsBody.appendChild(row);
+                    })
+                    .catch(error => {
+                        console.log(error);
                     });
-                })
-                .catch(error => {
-                    // Обработка ошибок
-                    console.log(error);
-                });
+            });
         });
-    });
-</script>
+    </script>
 </body>
 </html>
