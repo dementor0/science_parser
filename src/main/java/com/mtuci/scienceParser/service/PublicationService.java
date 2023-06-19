@@ -6,6 +6,7 @@ import com.mtuci.scienceParser.model.Publication;
 import com.mtuci.scienceParser.repository.AuthorInfoRepository;
 import com.mtuci.scienceParser.repository.AuthorRepository;
 import com.mtuci.scienceParser.repository.PublicationRepository;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -50,24 +51,26 @@ public class PublicationService {
 
         List<String> urlOnPublicationForTopicSearch = findPublicationUrlInTopic(request,numberOfPages);
 
-        System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver.exe");
+        WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverTopic = new ChromeDriver(options);
-        options.setHeadless(true);
+        driverTopic.manage().window().setSize(new Dimension(1, 1));
+        driverTopic.manage().window().setPosition(new Point(-2000, 0));
+
         for (String str : urlOnPublicationForTopicSearch){
-            driverTopic.manage().timeouts().pageLoadTimeout(1, TimeUnit.SECONDS);
+            driverTopic.manage().timeouts().pageLoadTimeout(4, TimeUnit.SECONDS);
             try {
                 driverTopic.get(str);
             }catch (TimeoutException ignore){}
 
             Publication publication = new Publication();
 
-            WebDriverWait wait = new WebDriverWait(driverTopic, Duration.ofSeconds(10));
+            WebDriverWait wait = new WebDriverWait(driverTopic, Duration.ofSeconds(15));
             By productSelector = By.cssSelector("#lite-page > main");
             try {
                 pageElement = wait.until(ExpectedConditions.visibilityOfElementLocated(productSelector));
-            } catch (TimeoutException e){
+            } catch (TimeoutException ignore){
                 driverTopic.get(str);
             }
            
@@ -142,11 +145,13 @@ public class PublicationService {
 
         List<String> urlOnPublicationForSearch = findPublicationUrlInSearch(request,numberOfPages);
 
-        System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver.exe");
+        WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverSearch = new ChromeDriver(options);
-        options.setHeadless(true);
+        driverSearch.manage().window().setSize(new Dimension(1, 1));
+        driverSearch.manage().window().setPosition(new Point(-2000, 0));
+
         for (String str : urlOnPublicationForSearch){
             driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
             try {
@@ -246,11 +251,10 @@ public class PublicationService {
         AuthorInfo authorInfo = new AuthorInfo();
         List<Publication> publications = new ArrayList<>();
 
-        System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver.exe");
+        WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverAuthor = new ChromeDriver(options);
-        options.setHeadless(true);
 
         String authorNameInRequest = request.replace(" ","+");
         String url = "https://www.researchgate.net/search.Search.html?query=" + authorNameInRequest + "&type=researcher";
@@ -259,21 +263,19 @@ public class PublicationService {
         String urlOnAuthorProfile = "https://www.researchgate.net/profile/" + encodedUrlOnAuthorResearch;
 
         try{
-            driverAuthor.manage().timeouts().pageLoadTimeout(4, TimeUnit.SECONDS);
+            driverAuthor.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
             try {
                 driverAuthor.get(url);
             } catch (TimeoutException e){}
             //driverAuthor.navigate().refresh();
             WebDriverWait wait = new WebDriverWait(driverAuthor, Duration.ofSeconds(3));
-            By authorSelector = By.cssSelector("#page-container");
+            By authorSelector = By.cssSelector("body");
             WebElement pageElement = wait.until(ExpectedConditions.visibilityOfElementLocated(authorSelector));
 
             WebElement buttonLogIn = pageElement.findElement(By.cssSelector(".header-login-item-link.gtm-header-login"));
             buttonLogIn.click();
-            WebElement enableForm = pageElement.findElement(By.xpath("/html/body/div[6]"));
-            WebElement logInForm = enableForm.findElement(By.cssSelector(".login-form-card"));
+            WebElement logInForm = pageElement.findElement(By.xpath("/html/body/div[5]"));
             logIn(logInForm);
-            wait.until(ExpectedConditions.visibilityOfElementLocated(authorSelector));
 
         } catch (NoSuchElementException e){
             e.getMessage();
@@ -282,7 +284,7 @@ public class PublicationService {
 
         try {
             authorInfo.setUrl(urlOnAuthorProfile);
-            driverAuthor.manage().timeouts().pageLoadTimeout(4, TimeUnit.SECONDS);
+            driverAuthor.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
             driverAuthor.get(urlOnAuthorPublication);
 
             By authorInfoSelector = By.cssSelector("#page-container");
@@ -352,14 +354,15 @@ public class PublicationService {
         List<String> urlOnPublicationForTopicSearch = new ArrayList<>();
         WebElement lastItem, link;
         String href;
-        System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver.exe");
+        WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverTopic = new ChromeDriver(options);
-        options.setHeadless(true);
+        driverTopic.manage().window().setSize(new Dimension(1, 1));
+        driverTopic.manage().window().setPosition(new Point(-2000, 0));
 
         String url = "https://www.researchgate.net/topic/" + request + "/publications";
-        driverTopic.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+        driverTopic.manage().timeouts().pageLoadTimeout(3, TimeUnit.SECONDS);
         try {
             driverTopic.get(url);
             driverTopic.navigate().refresh();
@@ -407,14 +410,15 @@ public class PublicationService {
         List<String> urlOnPublicationForSearch = new ArrayList<>();
         WebElement lastItem, link;
         String href;
-        System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver.exe");
+        WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
         WebDriver driverSearch = new ChromeDriver(options);
-        options.setHeadless(true);
+        driverSearch.manage().window().setSize(new Dimension(1, 1));
+        driverSearch.manage().window().setPosition(new Point(-2000, 0));
 
         String url = "https://www.researchgate.net/search/publication?q=" + request;
-        driverSearch.manage().timeouts().pageLoadTimeout(2, TimeUnit.SECONDS);
+        driverSearch.manage().timeouts().pageLoadTimeout(1, TimeUnit.SECONDS);
         try {
             driverSearch.get(url);
             driverSearch.navigate().refresh();

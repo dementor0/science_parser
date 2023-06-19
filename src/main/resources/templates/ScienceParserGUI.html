@@ -116,8 +116,11 @@
                 })
                     .then(response => response.json())
                     .then(data => {
-                        var tableBody = document.getElementById('publicationBody');
 
+                        var tableBody = document.getElementById('publicationBody');
+                        while (tableBody.firstChild) {
+                            tableBody.removeChild(tableBody.firstChild);
+                        }
                         data.forEach(function(Publication) {
                             var row = document.createElement('tr');
 
@@ -214,7 +217,11 @@
                 })
                     .then(response => response.json())
                     .then(data => {
+
                         var tableBody = document.getElementById('publicationBody');
+                        while (tableBody.firstChild) {
+                            tableBody.removeChild(tableBody.firstChild);
+                        }
 
                         data.forEach(function(Publication) {
                             var row = document.createElement('tr');
